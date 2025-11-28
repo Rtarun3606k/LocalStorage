@@ -1,0 +1,42 @@
+from flask import Flask 
+
+#database setup 
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
+from flask_migrate import Migrate
+
+
+#swagger setup and imports
+from utils.swagger import swagger , SWAGGER_URL  
+
+#configurationsclass Config:
+app = Flask(__name__)
+
+DEBUG = True
+SECRET_KEY= "your_secret_key"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///authModule.sqlite"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app) 
+migrate = Migrate(app, db)
+
+
+
+#import blueprints
+from  routes.test import test_bp 
+from routes.health import health_bp
+
+from database.test import testModel
+from database.UserModel import UserModel
+from database.developerModel import DeveloperModel
+from database.organization import Organization
+from database.services import ServicesModel
+from database.userServices import UserService
+from database.apiKey import ApiKey
+from database.auditLog import AuditLog
+
+
+#register blueprints
+app.register_blueprint(test_bp,url_prefix='/api')
+app.register_blueprint(health_bp,url_prefix='/api')
+app.register_blueprint(swagger,url_prefix=SWAGGER_URL)
