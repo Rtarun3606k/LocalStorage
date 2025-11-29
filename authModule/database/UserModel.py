@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String,Index 
-from sqlalchemy import Column, Integer, String,Index 
 from datetime import datetime,timezone
 from app import db 
 
@@ -17,8 +16,9 @@ class UserModel(db.Model):
 
 
 
-    def __init__(self, name,email ):
-        self.name = name
-        self.email = email      
     def __repr__(self):
         return f"<UserModel(id={self.id}, name={self.name}, email={self.email})>"
+
+
+
+

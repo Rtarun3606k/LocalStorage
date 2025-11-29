@@ -3,8 +3,8 @@ from datetime import datetime,timezone
 from app import db 
 
 
-class Organization(db.Model):
-    __tablename__ = 'organozation_table'
+class OrganizationModel(db.Model):
+    __tablename__ = 'organization_table'
     
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
@@ -12,7 +12,8 @@ class Organization(db.Model):
     updatedAt = Column(String(200), nullable=True, onupdate= lambda: datetime.now(timezone.utc).isoformat(),default= lambda: datetime.now(timezone.utc).isoformat())
 
 
-    def __init__(self, name):
-        self.name = name
     def __repr__(self):
-        return f"<Orginaziation model (id={self.id}, name={self.name})>" 
+        return f"<OrganizationModel (id={self.id}, name={self.name})>"
+
+
+

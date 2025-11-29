@@ -14,12 +14,12 @@ class DeveloperModel(db.Model):
     createdAt = Column(String(200), nullable=True, default= lambda: datetime.now(timezone.utc).isoformat()) 
     updatedAt = Column(String(200), nullable=True, onupdate= lambda: datetime.now(timezone.utc).isoformat(),default= lambda: datetime.now(timezone.utc).isoformat())
     userId = Column(Integer,ForeignKey('user_table.id', name="fk_developer_user",ondelete='CASCADE' ), nullable=False , index=True) #foreign key to UserModel
-    organizationId = Column(Integer,ForeignKey('organozation_table.id',name="fk_developer_org", ondelete='CASCADE' ), nullable=False , index=True) #foreign key to OrganizationModel
+    organizationId = Column(Integer,ForeignKey('organization_table.id',name="fk_developer_org", ondelete='CASCADE' ), nullable=False , index=True) #foreign key to OrganizationModel
 
     #relation with UserModel
     user = db.relationship('UserModel', backref=db.backref('developers', lazy=True,cascade="all, delete-orphan"))
     #relation with OrganizationModel
-    orginazation = db.relationship('OrganizationModel', backref=db.backref('developers', lazy=True,cascade="all, delete-orphan"))
+    organization = db.relationship('OrganizationModel', backref=db.backref('developers', lazy=True,cascade="all, delete-orphan"))
 
 
     def __init__(self, name,email ):
