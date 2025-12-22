@@ -1,5 +1,9 @@
 from flask import Blueprint, request, jsonify
-from app import db,log,limiter
+from flask import Blueprint, request, jsonify
+from extensions import db, log, limiter
+from utils.passwordHashing import hashPassword, verifyPassword
+from database.UserModel import UserModel
+
 from utils.passwordHashing import hashPassword , verifyPassword
 from database.UserModel import UserModel 
 
