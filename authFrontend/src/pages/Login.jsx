@@ -23,7 +23,6 @@ export default function Login() {
         <h1 className="text-3xl font-semibold text-center text-gray-800 mb-6">
           Login
         </h1>
-
         <form onSubmit={handleLogin} className="space-y-5">
           <input
             type="email"
