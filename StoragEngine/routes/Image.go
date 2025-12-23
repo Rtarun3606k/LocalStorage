@@ -101,6 +101,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		header.Filename,
 		header.Header.Get("Content-Type"),
 		size,
+		config.StatusReady,
 	)
 
 	if err != nil {
