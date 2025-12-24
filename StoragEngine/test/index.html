@@ -1,154 +1,156 @@
 <!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Go HLS Stream Player</title>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #1a1a1a;
-      color: white;
-      padding-top: 50px;
-    }
-
-    video {
-      width: 80%;
-      max-width: 800px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-      background: black;
-      border-radius: 8px;
-    }
-
-    .controls {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-    }
-
-    input {
-      padding: 10px;
-      border-radius: 4px;
-      border: none;
-      width: 300px;
-      font-size: 16px;
-    }
-
-    button {
-      padding: 10px 20px;
-      cursor: pointer;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 16px;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    #status {
-      margin-top: 15px;
-      font-size: 0.9em;
-      color: #aaa;
-      font-family: monospace;
-    }
-  </style>
-</head>
-
-<body>
-  <h1>Stream HLS Video</h1>
-
-  <video id="video" controls muted></video>
-
-  <div class="controls">
-    <input type="text" id="videoId" placeholder="Enter Video ID (e.g. 123-abc-456)" />
-    <button onclick="loadVideo()">Play Stream</button>
-  </div>
-  <div id="status">Ready to load...</div>
-
-  <script>
-    var video = document.getElementById("video");
-    var hls = null;
-
-    function loadVideo() {
-      var id = document.getElementById("videoId").value.trim();
-      if (!id) return alert("Please enter a Video ID");
-
-      // Construct your Backend URL
-      var streamUrl = `http://localhost:8080/api/v1/video/${id}/index.m3u8`;
-
-      var status = document.getElementById("status");
-      status.innerText = "Attempting to load: " + id;
-
-      // CHECK 1: Native HLS Support (Safari / Apple devices)
-      if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = streamUrl;
-        video.addEventListener("loadedmetadata", function () {
-          video
-            .play()
-            .catch((e) => console.log("Native Autoplay blocked:", e));
-        });
-        status.innerText = "Playing natively (Safari Mode)";
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Go HLS Stream Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #1a1a1a;
+        color: white;
+        padding-top: 50px;
       }
-      // CHECK 2: HLS.js Support (Chrome, Firefox, Edge)
-      else if (Hls.isSupported()) {
-        if (hls) {
-          hls.destroy(); // Cleanup previous stream if exists
+
+      video {
+        width: 80%;
+        max-width: 800px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        background: black;
+        border-radius: 8px;
+      }
+
+      .controls {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+
+      input {
+        padding: 10px;
+        border-radius: 4px;
+        border: none;
+        width: 300px;
+        font-size: 16px;
+      }
+
+      button {
+        padding: 10px 20px;
+        cursor: pointer;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 16px;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      #status {
+        margin-top: 15px;
+        font-size: 0.9em;
+        color: #aaa;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Stream HLS Video</h1>
+
+    <video id="video" controls muted></video>
+
+    <div class="controls">
+      <input
+        type="text"
+        id="videoId"
+        placeholder="Enter Video ID (e.g. 123-abc-456)"
+      />
+      <button onclick="loadVideo()">Play Stream</button>
+    </div>
+    <div id="status">Ready to load...</div>
+
+    <script>
+      var video = document.getElementById("video");
+      var hls = null;
+
+      function loadVideo() {
+        var id = document.getElementById("videoId").value.trim();
+        if (!id) return alert("Please enter a Video ID");
+
+        // Construct your Backend URL
+        var streamUrl = `http://localhost:8080/api/v1/video/${id}/index.m3u8`;
+
+        var status = document.getElementById("status");
+        status.innerText = "Attempting to load: " + id;
+
+        // CHECK 1: Native HLS Support (Safari / Apple devices)
+        if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = streamUrl;
+          video.addEventListener("loadedmetadata", function () {
+            video
+              .play()
+              .catch((e) => console.log("Native Autoplay blocked:", e));
+          });
+          status.innerText = "Playing natively (Safari Mode)";
         }
-
-        hls = new Hls({
-          debug: true, // Helps see logs in console
-        });
-
-        hls.loadSource(streamUrl);
-        hls.attachMedia(video);
-
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
-          var playPromise = video.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((error) => {
-              console.log(
-                "Autoplay blocked by browser policy. User must click play.",
-              );
-              status.innerText = "Loaded! Click play to start.";
-            });
+        // CHECK 2: HLS.js Support (Chrome, Firefox, Edge)
+        else if (Hls.isSupported()) {
+          if (hls) {
+            hls.destroy(); // Cleanup previous stream if exists
           }
-          status.innerText = "Playing via HLS.js";
-        });
 
-        hls.on(Hls.Events.ERROR, function (event, data) {
-          if (data.fatal) {
-            status.innerText = "Error: " + data.type;
-            console.error("HLS Fatal Error:", data);
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                console.log("Network error, trying to recover...");
-                hls.startLoad();
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                console.log("Media error, trying to recover...");
-                hls.recoverMediaError();
-                break;
-              default:
-                hls.destroy();
-                break;
+          hls = new Hls({
+            debug: true, // Helps see logs in console
+          });
+
+          hls.loadSource(streamUrl);
+          hls.attachMedia(video);
+
+          hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            var playPromise = video.play();
+            if (playPromise !== undefined) {
+              playPromise.catch((error) => {
+                console.log(
+                  "Autoplay blocked by browser policy. User must click play.",
+                );
+                status.innerText = "Loaded! Click play to start.";
+              });
             }
-          }
-        });
-      } else {
-        status.innerText = "Your browser does not support HLS.";
-      }
-    }
-  </script>
-</body>
+            status.innerText = "Playing via HLS.js";
+          });
 
+          hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+              status.innerText = "Error: " + data.type;
+              console.error("HLS Fatal Error:", data);
+              switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  console.log("Network error, trying to recover...");
+                  hls.startLoad();
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  console.log("Media error, trying to recover...");
+                  hls.recoverMediaError();
+                  break;
+                default:
+                  hls.destroy();
+                  break;
+              }
+            }
+          });
+        } else {
+          status.innerText = "Your browser does not support HLS.";
+        }
+      }
+    </script>
+  </body>
 </html>

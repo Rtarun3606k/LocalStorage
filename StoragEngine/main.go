@@ -62,6 +62,10 @@ func main() {
 	// THIS LINE requires Gorilla Mux to parse {id} and {filename}
 	v1.HandleFunc("/video/{id}/{filename}", route.VideoDownloadHandler).Methods("GET")
 
+	// Other File Routes
+	v1.HandleFunc("/other/upload", route.OtherUploadHandler).Methods("POST")
+	v1.HandleFunc("/file/download/{id}", route.FileDownloadHandler).Methods("GET")
+
 	fmt.Println("Storage Engine v1.0.0 is running on :8080")
 
 	// 4. Start Server with CORS Middleware

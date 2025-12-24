@@ -7,6 +7,18 @@ import (
 
 func InsertFileMetadata(userID, contentHash, originalName, mimeType string, size int64, status string) (string, error) {
 	var newId string
+	// --- DEBUGGING BLOCK (Remove after fixing) ---
+	fmt.Printf("\n--- DB INSERT DEBUG ---\n")
+	fmt.Printf("ContentHash: %s (Len: %d)\n", contentHash, len(contentHash))
+	fmt.Printf("OriginalName: %s (Len: %d)\n", originalName, len(originalName))
+	fmt.Printf("MimeType: %s (Len: %d)\n", mimeType, len(mimeType))
+	fmt.Printf("UserID: %s (Len: %d)\n", userID, len(userID))
+	// ---------------------------------------------
+
+	// 1. Sanity Check
+	if len(contentHash) > 64 {
+		return "", fmt.Errorf("CRITICAL: Hash is too long! (%d chars). Expected 64.", len(contentHash))
+	}
 	query := `
 		INSERT INTO file_metadata (user_id, content_hash, original_name, mime_type, size_bytes,status)
 		VALUES ($1, $2, $3, $4, $5,$6)
@@ -91,4 +103,24 @@ func GetFIleMetadataByHash(contentHash string) (map[string]any, error) {
 	fmt.Println("Retrieved metadata for content hash :", contentHash, result["id"])
 
 	return result, nil
+}
+
+// database/db.go
+
+func OtherGetFileMetadataByID(id string) (map[string]string, error) {
+	query := `SELECT content_hash, original_name, mime_type FROM file_metadata WHERE id = $1`
+
+	var hash, name, mime string
+	// Pass the UUID directly. Postgres driver handles the string->uuid conversion safely.
+	err := configs.DB.QueryRow(query, id).Scan(&hash, &name, &mime)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]string{
+		"hash": hash,
+		"name": name,
+		"mime": mime,
+	}, nil
 }

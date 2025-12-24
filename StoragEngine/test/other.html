@@ -1,0 +1,35 @@
+<input type="file" id="batchInput" name="files" multiple />
+<button onclick="uploadBatch()">Upload All Files</button>
+
+<script>
+  async function uploadBatch() {
+    const input = document.getElementById("batchInput");
+    const files = input.files;
+
+    if (files.length === 0) return alert("Select files first!");
+
+    const formData = new FormData();
+
+    // Append all selected files to the SAME key 'files'
+    for (let i = 0; i < files.length; i++) {
+      formData.append("files", files[i]);
+    }
+
+    try {
+      const response = await fetch(
+        "http://localhost:8080/api/v1/other/upload",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      const result = await response.json();
+      console.log("Upload Report:", result);
+      alert(`Uploaded ${result.count} files successfully!`);
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Upload failed");
+    }
+  }
+</script>

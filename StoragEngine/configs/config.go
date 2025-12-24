@@ -6,6 +6,7 @@ const (
 	UploadDir          = "./uploads"
 	MaxUploadSize      = 10 << 20  // 10 MB
 	MaxUploadSizeVideo = 200 << 20 // 200 MB
+	MaxUploadSizeOther = 50 << 20  // 50 MB
 	StatusPending      = "pending"
 	StatusProcessing   = "processing"
 	StatusReady        = "ready"
