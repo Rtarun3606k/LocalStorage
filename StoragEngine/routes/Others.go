@@ -72,6 +72,10 @@ func OtherUploadHandler(w http.ResponseWriter, r *http.Request) {
 		"uploaded_file_ids": uploadedFileIDs,
 		"failed_files":      failedFiles,
 		"count":             len(uploadedFileIDs),
+		"message": map[string]string{
+			"success": fmt.Sprintf("%d files uploaded successfully", len(uploadedFileIDs)),
+			"failed":  fmt.Sprintf("%d files failed to upload", len(failedFiles)),
+		},
 	})
 }
 
