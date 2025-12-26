@@ -1,5 +1,6 @@
 from flask import Flask
 
+from flask_cors import CORS
 # database setup
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
@@ -11,6 +12,7 @@ from utils.swagger import swagger, SWAGGER_URL
 
 # configurationsclass Config:
 app = Flask(__name__)
+CORS(app) 
 
 DEBUG = True
 SECRET_KEY = "your_secret_key"
