@@ -4,7 +4,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard"; 
 import StreamPlayer from "./pages/StreamPlayer";       
 import StorageDashboard from "./pages/StorageDashboard"; 
-import React from 'react'
+import React from 'react';
 
 export default function App() {
   return (
