@@ -5,6 +5,8 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from flask_migrate import Migrate
+from routes.storageProxy import storageProxy_bp
+from config import PUBLIC_KEY_PATH
 
 
 # swagger setup and imports
@@ -14,11 +16,14 @@ from utils.swagger import swagger, SWAGGER_URL
 app = Flask(__name__)
 CORS(app) 
 
+app.register_blueprint(storageProxy_bp, url_prefix="/api/storage")
+
+
 DEBUG = True
 SECRET_KEY = "your_secret_key"
 JWT_SECRET = "supersecret"
 JWT_REFRESH_SECRET = "refreshsecret"
-PUBLIC_KEY_PATH = "keys/public_2025.pem"
+
 
 # Format: postgresql://username:password@host:port/database_name
 app.config["SQLALCHEMY_DATABASE_URI"] = (
