@@ -54,18 +54,21 @@ func main() {
 	v1 := r.PathPrefix("/api/v1").Subrouter()
 
 	// Register Routes
-	v1.HandleFunc("/upload", route.UploadHandler).Methods("POST")
-	v1.HandleFunc("/download", route.DownloadHandler).Methods("GET")
+	v1.HandleFunc("/image/upload", route.UploadHandler).Methods("POST")
+	v1.HandleFunc("/image/download", route.DownloadHandler).Methods("GET")
 
 	// Video Routes
 	v1.HandleFunc("/video/upload", route.VideoUploadHandler).Methods("POST")
 	// THIS LINE requires Gorilla Mux to parse {id} and {filename}
 	v1.HandleFunc("/video/{id}/{filename}", route.VideoDownloadHandler).Methods("GET")
 
-	// Other File Routes
-	v1.HandleFunc("/other/upload", route.OtherUploadHandler).Methods("POST")
-	v1.HandleFunc("/file/download/{id}", route.FileDownloadHandler).Methods("GET")
-
+	// Universal File Routes
+	v1.HandleFunc("/upload", route.OtherUploadHandler).Methods("POST")
+	v1.HandleFunc("/download/{id}", route.FileDownloadHandler).Methods("GET")
+	v1.HandleFunc("/rename/{id}", route.Remane).Methods("PATCH")
+	v1.HandleFunc("/delete/{id}", route.DeleteUniversalHandler).Methods("DELETE")
+	v1.HandleFunc("/search", route.SearchFileshandler).Methods("GET")
+	//	 Start Message
 	fmt.Println("Storage Engine v1.0.0 is running on :8080")
 
 	// 4. Start Server with CORS Middleware

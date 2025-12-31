@@ -1,5 +1,9 @@
 package configs
 
+import "regexp"
+
+var SafeRegex = regexp.MustCompile(`[^a-zA-Z0-9 ._-]`)
+
 const (
 	AppName            = "Storage Engine"
 	AppVersion         = "1.0.0"

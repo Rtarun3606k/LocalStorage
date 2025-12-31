@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"log"
 	configs "storageEngine/configs"
 )
 
@@ -123,4 +124,21 @@ func OtherGetFileMetadataByID(id string) (map[string]string, error) {
 		"name": name,
 		"mime": mime,
 	}, nil
+}
+
+func RemaneFile(fileID, userID, newName string) error {
+
+	query := `UPDATE file_metadata SET original_name = $1 WHERE id = $2 and user_id = $3 `
+
+	var err error
+
+	err = configs.DB.QueryRow(query, newName, fileID, userID).Scan()
+
+	if err != nil {
+		log.Fatalln(err)
+		return err
+	}
+
+	return nil
+
 }

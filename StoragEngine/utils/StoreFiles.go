@@ -124,3 +124,20 @@ func StoreFiles(file multipart.File, header *multipart.FileHeader, userId string
 	return newFileId, nil
 }
 
+func SanitizeFilename(filename string) string {
+
+	name := filepath.Base(filename)
+
+	newName := configs.SafeRegex.ReplaceAllString(name, "-")
+
+	if len(newName) > 200 {
+		newName = newName[:200]
+	}
+
+	if newName == " " || newName == "." {
+		newName = "renamed_file"
+	}
+
+	return newName
+
+}
