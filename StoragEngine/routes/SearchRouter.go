@@ -18,6 +18,7 @@ func SearchFileshandler(w http.ResponseWriter, r *http.Request) {
 		Query:    query.Get("q"),
 		FileType: query.Get("type"),
 		SortBy:   query.Get("sort"),
+		FolderID: query.Get("folder_id"),
 	}
 	log.Println("logs params", params.Query, params.FileType, params.SortBy)
 

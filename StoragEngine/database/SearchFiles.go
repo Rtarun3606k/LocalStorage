@@ -12,6 +12,7 @@ type SearchFilesParams struct {
 	Query    string
 	FileType string
 	SortBy   string
+	FolderID string
 }
 
 func SearchFiles(params SearchFilesParams) ([]map[string]any, error) {
@@ -41,6 +42,15 @@ func SearchFiles(params SearchFilesParams) ([]map[string]any, error) {
 			args = append(args, params.FileType+"%")
 			argCounter++
 		}
+	}
+
+	if params.FolderID == "root" {
+		query += fmt.Sprintf(" AND folder_id IS NULL")
+	} else if len(params.FolderID) == 36 {
+		// Scenario B: If FolderID is a UUID, we want specific folder
+		query += fmt.Sprintf(" AND folder_id = $%d", argCounter)
+		args = append(args, params.FolderID)
+		argCounter++
 	}
 
 	// 3. Dynamic Sorting

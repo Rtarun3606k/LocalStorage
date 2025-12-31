@@ -68,6 +68,11 @@ func main() {
 	v1.HandleFunc("/rename/{id}", route.Remane).Methods("PATCH")
 	v1.HandleFunc("/delete/{id}", route.DeleteUniversalHandler).Methods("DELETE")
 	v1.HandleFunc("/search", route.SearchFileshandler).Methods("GET")
+	v1.HandleFunc("/folders", route.CreateoFolderHandler).Methods("POST")
+	v1.HandleFunc("/file/move/{id}", route.MoveFileHandler).Methods("PATCH")
+	v1.HandleFunc("/folder/rename/{id}", route.RenameFolderHandler).Methods("PATCH")
+	v1.HandleFunc("/folder/delete/{id}", route.DeleteFolderHandler).Methods("DELETE")
+
 	//	 Start Message
 	fmt.Println("Storage Engine v1.0.0 is running on :8080")
 
