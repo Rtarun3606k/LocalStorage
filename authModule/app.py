@@ -51,6 +51,7 @@ from routes.test import test_bp
 from routes.health import health_bp
 from routes.userRoutes import userRoute
 from routes.keyExchange import keyExchange_bp
+from routes.serviceRoutes import serviceRoute
 
 
 # import dtabase models
@@ -70,3 +71,4 @@ app.register_blueprint(health_bp, url_prefix="/api")
 app.register_blueprint(swagger, url_prefix=SWAGGER_URL)
 app.register_blueprint(userRoute, url_prefix="/api/users")
 app.register_blueprint(keyExchange_bp, url_prefix="/api/keys")
+app.register_blueprint(serviceRoute, url_prefix="/api/services")
