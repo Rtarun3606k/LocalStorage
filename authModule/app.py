@@ -52,6 +52,7 @@ from routes.health import health_bp
 from routes.userRoutes import userRoute
 from routes.keyExchange import keyExchange_bp
 from routes.serviceRoutes import serviceRoute
+from routes.apiKeyRoutes import apiKeyRoute
 
 
 # import dtabase models
@@ -72,3 +73,16 @@ app.register_blueprint(swagger, url_prefix=SWAGGER_URL)
 app.register_blueprint(userRoute, url_prefix="/api/users")
 app.register_blueprint(keyExchange_bp, url_prefix="/api/keys")
 app.register_blueprint(serviceRoute, url_prefix="/api/services")
+app.register_blueprint(apiKeyRoute, url_prefix="/api/apikeys")
+
+
+# CORS configuration to allow cookies from frontend
+@app.after_request
+def after_request(response):
+    """Add CORS headers to allow cookies and credentials"""
+    # Allow specific origin (update this to your frontend URL in production)
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS')
+    return response
