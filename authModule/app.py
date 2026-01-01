@@ -1,9 +1,11 @@
 from flask import Flask
 
+from flask_cors import CORS
 # database setup
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 from flask_migrate import Migrate
+from routes.storageProxy import storageProxy_bp
+from config import PUBLIC_KEY_PATH
 
 
 # swagger setup and imports
@@ -11,12 +13,16 @@ from utils.swagger import swagger, SWAGGER_URL
 
 # configurationsclass Config:
 app = Flask(__name__)
+CORS(app) 
+
+app.register_blueprint(storageProxy_bp, url_prefix="/api/storage")
+
 
 DEBUG = True
 SECRET_KEY = "your_secret_key"
 JWT_SECRET = "supersecret"
 JWT_REFRESH_SECRET = "refreshsecret"
-PUBLIC_KEY_PATH = "keys/public_2025.pem"
+
 
 # Format: postgresql://username:password@host:port/database_name
 app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -34,58 +40,42 @@ from utils.logging import setup_logging
 setup_logging()
 import logging
 
-log = logging.getLogger(__name__)
+from env import EnvConfig
 
+db = SQLAlchemy()
+migrate = Migrate()
+limiter = Limiter(key_func=get_remote_address)
 
-# add limmiter
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+log = logging.getLogger(__name__)   # ✅ THIS LINE FIXES THE ERROR
 
-limiter = Limiter(
-    get_remote_address, app=app, default_limits=["200 per day", "50 per hour"]
-)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(EnvConfig)
 
+    db.init_app(app)
+    migrate.init_app(app, db)
+    limiter.init_app(app)
 
-# import blueprints
-from routes.test import test_bp
-from routes.health import health_bp
-from routes.userRoutes import userRoute
-from routes.keyExchange import keyExchange_bp
-from routes.serviceRoutes import serviceRoute
-from routes.apiKeyRoutes import apiKeyRoute
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": EnvConfig.FRONTEND_ORIGIN}},
+        supports_credentials=True
+    )
 
+    from utils.logging import setup_logging
+    setup_logging()
 
-# import dtabase models
-from database.test import testModel
-from database.UserModel import UserModel
-from database.developerModel import DeveloperModel
-from database.organization import OrganizationModel
-from database.services import ServicesModel
-from database.userServices import UserService
-from database.apiKey import ApiKey
-from database.auditLog import AuditLog
+    from utils.swagger import swagger, SWAGGER_URL
+    app.register_blueprint(swagger, url_prefix=SWAGGER_URL)
 
+    from routes.test import test_bp
+    from routes.health import health_bp
+    from routes.userRoutes import userRoute
+    from routes.keyExchange import keyExchange_bp
 
-# register blueprints
-app.register_blueprint(test_bp, url_prefix="/api")
-app.register_blueprint(health_bp, url_prefix="/api")
-app.register_blueprint(swagger, url_prefix=SWAGGER_URL)
-app.register_blueprint(userRoute, url_prefix="/api/users")
-app.register_blueprint(keyExchange_bp, url_prefix="/api/keys")
-app.register_blueprint(serviceRoute, url_prefix="/api/services")
-app.register_blueprint(apiKeyRoute, url_prefix="/api/apikeys")
+    app.register_blueprint(test_bp, url_prefix="/api")
+    app.register_blueprint(health_bp, url_prefix="/api")
+    app.register_blueprint(userRoute, url_prefix="/api/users")
+    app.register_blueprint(keyExchange_bp, url_prefix="/api/keys")
 
-
-# CORS configuration to allow cookies from frontend
-@app.after_request
-def after_request(response):
-    """Add CORS headers to allow cookies and credentials"""
-    import os
-    # Get frontend URL from environment (default to localhost:3000 for development)
-    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
-    
-    response.headers.add('Access-Control-Allow-Origin', frontend_url)
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS')
-    return response
+    return app
