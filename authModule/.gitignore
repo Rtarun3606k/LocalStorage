@@ -1,2 +1,5 @@
 test
-.venv
+test_*.py
+__pycache__
+*.pyc
+logs/
