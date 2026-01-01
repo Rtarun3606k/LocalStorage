@@ -7,7 +7,6 @@ from app import app, db, log
 from database.services import ServicesModel, UserRoleEnum
 from database.organization import OrganizationModel
 from sqlalchemy.exc import IntegrityError
-import uuid
 
 
 def create_default_organization():

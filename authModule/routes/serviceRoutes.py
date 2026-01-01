@@ -5,7 +5,6 @@ from database.organization import OrganizationModel
 from database.userServices import UserService
 from database.UserModel import UserModel
 from sqlalchemy.exc import IntegrityError
-import uuid
 
 serviceRoute = Blueprint('serviceRoute', __name__)
 
