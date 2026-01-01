@@ -94,6 +94,25 @@ func ProcessVideoJob(workerId int, job configs.VideoJob) error {
 		}
 		return err
 	}
+	//create thubnail
+	thumbPath := filepath.Join(job.OutputDir, "thumbnail.jpg")
+
+	log.Printf("Worker %d extracting thumbnail for file ID: %s", workerId, job.FileId)
+
+	thumbCmd := exec.Command("ffmpeg",
+		"-i", job.SourcePath, // Input File
+		"-ss", "00:00:01.000", // Seek to 1 second
+		"-vframes", "1", // Grab exactly 1 frame
+		"-vf", "scale=320:-1", // Resize to width 320px (keep aspect ratio)
+		"-q:v", "5", // Quality (2-5 is good for jpg)
+		thumbPath, // Output file
+	)
+
+	if output, err := thumbCmd.CombinedOutput(); err != nil {
+		// Note: We log the error but do NOT fail the job.
+		// The video is playable even if the thumbnail fails.
+		log.Printf("⚠️ Warning: Worker %d failed to generate thumbnail: %v, Output: %s", workerId, err, string(output))
+	}
 
 	//update status to ready
 	err = database.UpdateFileMetaDataStatus(job.FileId, configs.StatusReady)
@@ -102,6 +121,6 @@ func ProcessVideoJob(workerId int, job configs.VideoJob) error {
 		return err
 	}
 
-	log.Printf("Worker %d successfully processed video for file ID: %s\n", workerId, job.FileId)
+	log.Printf("Worker %d successfully processed video and thumbnail for the video for file ID: %s\n", workerId, job.FileId)
 	return nil
 }

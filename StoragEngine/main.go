@@ -49,6 +49,7 @@ func main() {
 
 	// 3. Router Setup (Using Gorilla Mux)
 	r := mux.NewRouter()
+	// r.HandleFunc("/s/{token}", route.).Methods("GET")
 
 	// Create API v1 subrouter
 	v1 := r.PathPrefix("/api/v1").Subrouter()
@@ -72,7 +73,8 @@ func main() {
 	v1.HandleFunc("/file/move/{id}", route.MoveFileHandler).Methods("PATCH")
 	v1.HandleFunc("/folder/rename/{id}", route.RenameFolderHandler).Methods("PATCH")
 	v1.HandleFunc("/folder/delete/{id}", route.DeleteFolderHandler).Methods("DELETE")
-
+	// Create Share Link
+	v1.HandleFunc("/file/share/{id}", route.CreateShareLinkHandler).Methods("POST")
 	//	 Start Message
 	fmt.Println("Storage Engine v1.0.0 is running on :8080")
 
