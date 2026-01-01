@@ -80,8 +80,11 @@ app.register_blueprint(apiKeyRoute, url_prefix="/api/apikeys")
 @app.after_request
 def after_request(response):
     """Add CORS headers to allow cookies and credentials"""
-    # Allow specific origin (update this to your frontend URL in production)
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+    import os
+    # Get frontend URL from environment (default to localhost:3000 for development)
+    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    
+    response.headers.add('Access-Control-Allow-Origin', frontend_url)
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS')

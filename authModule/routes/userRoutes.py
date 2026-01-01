@@ -3,7 +3,10 @@ from app import db, log, limiter
 from utils.passwordHashing import hashPassword, verifyPassword
 from utils.tokenManagement import create_jwt, create_refresh_token
 from database.UserModel import UserModel
-import datetime 
+import datetime
+import jwt
+import os
+from app import JWT_REFRESH_SECRET 
 
 # print(UserModel.__table__)
 userRoute = Blueprint('userRoute', __name__)
@@ -113,6 +116,9 @@ def login_user():
             "refreshToken": refresh_token
         }), 200)
         
+        # Get secure flag from environment (default False for development)
+        cookie_secure = os.getenv('COOKIE_SECURE', 'false').lower() == 'true'
+        
         # Set cookies with proper security settings
         # Access token cookie (short-lived, 20 minutes)
         response.set_cookie(
@@ -120,7 +126,7 @@ def login_user():
             value=access_token,
             max_age=20 * 60,  # 20 minutes in seconds
             httponly=True,  # Prevents JavaScript access (XSS protection)
-            secure=False,  # Set to True in production (HTTPS only)
+            secure=cookie_secure,  # Set to True in production (HTTPS only)
             samesite='Lax',  # CSRF protection
             path='/'
         )
@@ -131,7 +137,7 @@ def login_user():
             value=refresh_token,
             max_age=14 * 24 * 60 * 60,  # 14 days in seconds
             httponly=True,  # Prevents JavaScript access
-            secure=False,  # Set to True in production
+            secure=cookie_secure,  # Set to True in production
             samesite='Lax',
             path='/'
         )
@@ -189,9 +195,6 @@ def refresh_access_token():
             return jsonify({"error": "Refresh token not found"}), 401
         
         # Verify refresh token
-        import jwt
-        from app import JWT_REFRESH_SECRET
-        
         try:
             payload = jwt.decode(refresh_token, JWT_REFRESH_SECRET, algorithms=["HS256"])
             user_id = payload.get('sub')
@@ -209,13 +212,16 @@ def refresh_access_token():
                 "accessToken": new_access_token
             }), 200)
             
+            # Get secure flag from environment
+            cookie_secure = os.getenv('COOKIE_SECURE', 'false').lower() == 'true'
+            
             # Set new access token cookie
             response.set_cookie(
                 'access_token',
                 value=new_access_token,
                 max_age=20 * 60,  # 20 minutes
                 httponly=True,
-                secure=False,  # Set to True in production
+                secure=cookie_secure,  # Configurable for production
                 samesite='Lax',
                 path='/'
             )

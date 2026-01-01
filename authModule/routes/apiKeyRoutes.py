@@ -4,7 +4,7 @@ from database.apiKey import ApiKey
 from database.services import ServicesModel
 from database.userServices import UserService
 from database.UserModel import UserModel
-from utils.passwordHashing import hashPassword, ph
+from utils.passwordHashing import hashPassword, ph, verifyPassword
 from sqlalchemy.exc import IntegrityError
 import secrets
 import datetime
@@ -275,11 +275,12 @@ def validate_api_key():
         for api_key in api_keys:
             try:
                 # Verify the raw key against stored hash
-                from utils.passwordHashing import verifyPassword
                 if verifyPassword(api_key.hashed_key, raw_api_key):
                     matched_key = api_key
                     break
-            except:
+            except (ValueError, Exception) as e:
+                # Log the exception but continue checking other keys
+                log.debug(f"Failed to verify API key: {str(e)}")
                 continue
 
         if not matched_key:
