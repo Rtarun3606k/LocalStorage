@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 from cryptography.hazmat.primitives import serialization
 from functools import lru_cache
-from app import PUBLIC_KEY_PATH
+from config import PUBLIC_KEY_PATH
+
 
 
 KEYS_DIR = Path("keys")
