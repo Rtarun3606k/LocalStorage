@@ -5,31 +5,82 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"storageEngine/configs"
+
+	// IMP: You MUST use Gorilla Mux for {id} variables to work
+	"github.com/gorilla/mux"
+
 	config "storageEngine/configs"
-	imageRoute "storageEngine/routes"
+	route "storageEngine/routes"
+	"storageEngine/workers"
 )
 
-func main() { // Entry point for the Storage Engine application
+// CORS Middleware: Adds headers to every response so the browser accepts it
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 1. Set Headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-	if err := configs.ConnectToDatabase(); err != nil {
-		log.Fatal("Could not connect to database:", err)
+		// 2. Handle Preflight Browser Requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// 3. Continue to the Handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+func main() {
+	// 1. Database & Config Setup
+	if err := config.ConnectToDatabase(); err != nil {
+		log.Fatal("DB Error:", err)
 	}
 	if err := os.MkdirAll(config.UploadDir, 0755); err != nil {
-		log.Fatal(err)
-		panic("Failed to create upload directory: " + err.Error())
+		log.Fatal("Upload Dir Error:", err)
 	}
-	log.Printf("%s v%s started. Upload directory: %s", config.AppName, config.AppVersion, config.UploadDir)
 
-	v1Mux := http.NewServeMux()
-	// Register v1 routes
-	v1Mux.HandleFunc("/upload", imageRoute.UploadHandler)
-	v1Mux.HandleFunc("/download", imageRoute.DownloadHandler)
-	// v1Mux.HandleFunc("/download", downloadHandler)
+	// 2. Start Background Workers
+	for i := 0; i < config.NumVideoWorkers; i++ {
+		go workers.StartVideoWorker(i)
+	}
 
-	http.Handle("/api/v1/", http.StripPrefix("/api/v1", v1Mux))
-	fmt.Println("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal("Server failed to start: ", err)
+	// 3. Router Setup (Using Gorilla Mux)
+	r := mux.NewRouter()
+	// r.HandleFunc("/s/{token}", route.).Methods("GET")
+
+	// Create API v1 subrouter
+	v1 := r.PathPrefix("/api/v1").Subrouter()
+
+	// Register Routes
+	v1.HandleFunc("/image/upload", route.UploadHandler).Methods("POST")
+	v1.HandleFunc("/image/download", route.DownloadHandler).Methods("GET")
+
+	// Video Routes
+	v1.HandleFunc("/video/upload", route.VideoUploadHandler).Methods("POST")
+	// THIS LINE requires Gorilla Mux to parse {id} and {filename}
+	v1.HandleFunc("/video/{id}/{filename}", route.VideoDownloadHandler).Methods("GET")
+
+	// Universal File Routes
+	v1.HandleFunc("/upload", route.OtherUploadHandler).Methods("POST")
+	v1.HandleFunc("/download/{id}", route.FileDownloadHandler).Methods("GET")
+	v1.HandleFunc("/rename/{id}", route.Remane).Methods("PATCH")
+	v1.HandleFunc("/delete/{id}", route.DeleteUniversalHandler).Methods("DELETE")
+	v1.HandleFunc("/search", route.SearchFileshandler).Methods("GET")
+	v1.HandleFunc("/folders", route.CreateoFolderHandler).Methods("POST")
+	v1.HandleFunc("/file/move/{id}", route.MoveFileHandler).Methods("PATCH")
+	v1.HandleFunc("/folder/rename/{id}", route.RenameFolderHandler).Methods("PATCH")
+	v1.HandleFunc("/folder/delete/{id}", route.DeleteFolderHandler).Methods("DELETE")
+	// Create Share Link
+	v1.HandleFunc("/file/share/{id}", route.CreateShareLinkHandler).Methods("POST")
+	//	 Start Message
+	fmt.Println("Storage Engine v1.0.0 is running on :8080")
+
+	// 4. Start Server with CORS Middleware
+	// We wrap the router 'r' with enableCORS
+	if err := http.ListenAndServe(":8080", enableCORS(r)); err != nil {
+		log.Fatal(err)
 	}
 }

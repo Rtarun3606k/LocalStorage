@@ -6,6 +6,9 @@ from database.UserModel import UserModel
 
 from utils.passwordHashing import hashPassword , verifyPassword
 from database.UserModel import UserModel 
+from utils.kerberosUtils import generate_session_key
+from utils.tokenManagement import create_tgt
+
 
 # print(UserModel.__table__)
 userRoute = Blueprint('userRoute', __name__)
@@ -84,26 +87,48 @@ def login_user():
         data = request.get_json()
         email = data.get('email')
         password = data.get('password')
-        # print(f"Received login data for email: {email}, password: {password}")
 
         if not email or not password:
-            log.warning("Missing email or password in login", extra={"email": email,"ip": request.remote_addr,"api_endpoint": request.path})
+            log.warning(
+                "Missing email or password in login",
+                extra={"email": email, "ip": request.remote_addr, "api_endpoint": request.path}
+            )
             return jsonify({"error": "Email and password are required"}), 400
 
-        # Here you would typically verify the user's credentials
+        # Fetch user
         user = UserModel.query.filter_by(email=email).first()
         if not user:
-            log.warning("User not found during login", extra={"email": email,"ip": request.remote_addr,"api_endpoint": request.path})
+            log.warning(
+                "User not found during login",
+                extra={"email": email, "ip": request.remote_addr, "api_endpoint": request.path}
+            )
             return jsonify({"error": "Invalid email or password"}), 401
-        
-        # Verify the password
+
+        # Verify password
         if not verifyPassword(user.passwordHash, password):
-            log.warning("Invalid password during login", extra={"email": email,"ip": request.remote_addr,"api_endpoint": request.path})
+            log.warning(
+                "Invalid password during login",
+                extra={"email": email, "ip": request.remote_addr, "api_endpoint": request.path}
+            )
             return jsonify({"error": "Invalid email or password"}), 401
-        
-        log.info(f"User {email} logged in successfully", extra={"email": email,"ip": request.remote_addr,"api_endpoint": request.path})
-        return jsonify({"message": f"User {email} logged in successfully"}), 200
+
+        # 🔐 Kerberos-style AS logic
+        session_key = generate_session_key()
+        tgt = create_tgt(str(user.id), session_key)
+
+        log.info(
+            "User logged in and TGT issued",
+            extra={"email": email, "ip": request.remote_addr, "api_endpoint": request.path}
+        )
+
+        return jsonify({
+            "message": "Login successful",
+            "tgt": tgt
+        }), 200
 
     except Exception as e:
-        log.error(f"Error during user login: {str(e)}", extra={"email": email,"ip": request.remote_addr,"api_endpoint": request.path})
+        log.error(
+            f"Error during user login: {str(e)}",
+            extra={"email": email, "ip": request.remote_addr, "api_endpoint": request.path}
+        )
         return jsonify({"error": "An error occurred during login"}), 500

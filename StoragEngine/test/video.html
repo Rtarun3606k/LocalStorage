@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Storage Engine - Upload & Stream</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #121212;
+        color: #e0e0e0;
+        padding: 20px;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+      }
+
+      /* Container Styles */
+      .card {
+        background: #1e1e1e;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        width: 80%;
+        max-width: 800px;
+        margin-bottom: 30px;
+      }
+
+      /* Input & Button Styles */
+      input[type="text"],
+      input[type="file"] {
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #333;
+        background: #2c2c2c;
+        color: white;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 10px;
+      }
+
+      button {
+        padding: 10px 20px;
+        cursor: pointer;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-weight: bold;
+        width: 100%;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+
+      /* Progress Bar Styles */
+      #progressContainer {
+        width: 100%;
+        background-color: #333;
+        border-radius: 4px;
+        margin-top: 10px;
+        display: none;
+      }
+
+      #progressBar {
+        width: 0%;
+        height: 20px;
+        background-color: #28a745;
+        border-radius: 4px;
+        text-align: center;
+        line-height: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
+        transition: width 0.2s;
+      }
+
+      /* Video Player Styles */
+      video {
+        width: 100%;
+        background: black;
+        border-radius: 4px;
+        margin-top: 10px;
+      }
+
+      .player-controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      #status {
+        margin-top: 10px;
+        font-size: 0.9em;
+        color: #aaa;
+        font-family: monospace;
+      }
+
+      .copy-id {
+        cursor: pointer;
+        color: #007bff;
+        text-decoration: underline;
+        font-size: 0.9em;
+        margin-top: 5px;
+        display: inline-block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Storage Engine Dashboard</h1>
+
+    <div class="card">
+      <h2>1. Upload Video</h2>
+      <input type="file" id="fileInput" accept="video/*" />
+      <button onclick="uploadFile()" id="uploadBtn">Upload Video</button>
+
+      <div id="progressContainer">
+        <div id="progressBar">0%</div>
+      </div>
+      <div id="uploadStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>2. Stream Video</h2>
+      <video id="video" controls muted></video>
+      <div class="player-controls">
+        <input
+          type="text"
+          id="videoId"
+          placeholder="Paste Video ID here (e.g. 550e84...)"
+        />
+        <button onclick="loadVideo()">Play Stream</button>
+      </div>
+      <div id="status">Ready to load...</div>
+    </div>
+
+    <script>
+      // --- UPLOAD LOGIC ---
+      function uploadFile() {
+        var fileInput = document.getElementById("fileInput");
+        var file = fileInput.files[0];
+        if (!file) return alert("Please select a file first!");
+
+        var formData = new FormData();
+        formData.append("file", file);
+
+        var xhr = new XMLHttpRequest();
+
+        // 1. Listen for Progress Events (This is the magic part)
+        xhr.upload.addEventListener(
+          "progress",
+          function (e) {
+            if (e.lengthComputable) {
+              var percentComplete = Math.round((e.loaded / e.total) * 100);
+
+              var progressBar = document.getElementById("progressBar");
+              var container = document.getElementById("progressContainer");
+
+              container.style.display = "block";
+              progressBar.style.width = percentComplete + "%";
+              progressBar.textContent = percentComplete + "%";
+            }
+          },
+          false,
+        );
+
+        // 2. Handle Upload Complete
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            // Extract ID from response: "File uploaded successfully with ID: <uuid>"
+            var responseText = xhr.responseText;
+            var id = responseText.split(": ")[1]; // Simple split to get ID
+
+            document.getElementById("uploadStatus").innerHTML =
+              `✅ Upload Complete! <br> 
+                         <span class="copy-id" onclick="copyId('${id}')">Click to Copy ID: ${id}</span>`;
+
+            // Auto-fill the play box
+            document.getElementById("videoId").value = id;
+          } else {
+            document.getElementById("uploadStatus").innerText =
+              "❌ Error: " + xhr.responseText;
+          }
+          document.getElementById("uploadBtn").disabled = false;
+        };
+
+        // 3. Handle Errors
+        xhr.onerror = function () {
+          document.getElementById("uploadStatus").innerText =
+            "❌ Network Error";
+          document.getElementById("uploadBtn").disabled = false;
+        };
+
+        // Start Upload
+        document.getElementById("uploadBtn").disabled = true;
+        document.getElementById("uploadStatus").innerText = "Uploading...";
+
+        xhr.open("POST", "http://localhost:8080/api/v1/video/upload", true);
+        xhr.send(formData);
+      }
+
+      function copyId(id) {
+        navigator.clipboard.writeText(id);
+        alert("ID copied to clipboard!");
+      }
+
+      // --- STREAMING LOGIC (Same as before) ---
+      var video = document.getElementById("video");
+      var hls = null;
+
+      function loadVideo() {
+        var id = document.getElementById("videoId").value.trim();
+        if (!id) return alert("Please enter a Video ID");
+        var streamUrl = `http://localhost:8080/api/v1/video/${id}/index.m3u8`;
+        var status = document.getElementById("status");
+
+        if (Hls.isSupported()) {
+          if (hls) hls.destroy();
+          hls = new Hls();
+          hls.loadSource(streamUrl);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            video.play().catch((e) => console.log("Autoplay blocked"));
+            status.innerText = "Playing via HLS.js";
+          });
+          hls.on(Hls.Events.ERROR, function (event, data) {
+            if (data.fatal) {
+              status.innerText = "Error: " + data.type;
+              console.error(data);
+            }
+          });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+          video.src = streamUrl;
+          video.play();
+        }
+      }
+    </script>
+  </body>
+</html>
