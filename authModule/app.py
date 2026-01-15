@@ -1,5 +1,6 @@
 from flask import Flask
-
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_cors import CORS
 # database setup
 from flask_sqlalchemy import SQLAlchemy
@@ -46,7 +47,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 limiter = Limiter(key_func=get_remote_address)
 
-log = logging.getLogger(__name__)   # ✅ THIS LINE FIXES THE ERROR
+log = logging.getLogger(__name__)  
 
 def create_app():
     app = Flask(__name__)
