@@ -2,7 +2,7 @@ from pathlib import Path
 from cryptography.hazmat.primitives import serialization
 from functools import lru_cache
 from config import PUBLIC_KEY_PATH
-
+from env import EnvConfig
 
 # Use paths from env.py (NOT app.py)
 KEYS_DIR = Path(EnvConfig.KEYS_DIR)

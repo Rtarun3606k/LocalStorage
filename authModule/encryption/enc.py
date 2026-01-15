@@ -64,7 +64,7 @@ def rsa_decrypt_required(func):
     return wrapper
 
 # Generate using Fernet.generate_key()
-_KERBEROS_MASTER_KEY = b"PASTE_KEY_HERE"
+_KERBEROS_MASTER_KEY = b"FA0N9oCHzLWENVMZrOycqcoAZvyLLLablvgohcjFLMA="
 
 _fernet = Fernet(_KERBEROS_MASTER_KEY)
 
