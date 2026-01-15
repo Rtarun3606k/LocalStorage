@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 export default function Login() {
@@ -23,18 +22,26 @@ export default function Login() {
       });
 
       const data = await res.json();
+      console.log("Login response:", data);
 
       if (!res.ok) {
         alert(data.error || "Login failed");
         return;
       }
 
-      // OPTIONAL: store token if backend sends it
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
+      // ✅ STORE TGT AS AUTH TOKEN
+      localStorage.setItem("token", data.tgt);
 
-      // Redirect to dashboard
+      // ✅ TEMP USER INFO (until backend sends full user object)
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          email: form.email,
+          name: form.email.split("@")[0],
+        })
+      );
+
+      // ✅ Redirect to dashboard
       navigate("/dashboard");
     } catch (err) {
       alert("Server error. Please try again.");
